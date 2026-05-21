@@ -1,10 +1,44 @@
 param(
-    [string]$Destination = "$HOME/.github/copilot/code-review-guild",
+    [string]$Destination = (Get-Location).Path,
     [switch]$Force
 )
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoRoot = Split-Path -Parent $ScriptDir
 
-Write-Host "Installing the GitHub Copilot Code Review Guild bundle and shared skills..."
-& (Join-Path $ScriptDir "lib/install_bundle.ps1") -ToolName "github-copilot" -DefaultDestination "$HOME/.github/copilot/code-review-guild" -RepoRoot $RepoRoot -Destination $Destination -Force:$Force
+function Copy-ScaffoldFile {
+    param(
+        [string]$SourceRelativePath,
+        [string]$TargetRelativePath
+    )
+
+    $sourcePath = Join-Path $RepoRoot $SourceRelativePath
+    $targetPath = Join-Path $Destination $TargetRelativePath
+    $targetParent = Split-Path -Parent $targetPath
+
+    if ($targetParent) {
+        New-Item -ItemType Directory -Force -Path $targetParent | Out-Null
+    }
+
+    if ((Test-Path $targetPath) -and -not $Force) {
+        throw "Destination already contains $TargetRelativePath. Re-run with -Force to overwrite."
+    }
+
+    Copy-Item -Force $sourcePath $targetPath
+}
+
+Write-Host "Installing GitHub Copilot Code Review Guild project scaffolding..."
+
+Copy-ScaffoldFile `
+    -SourceRelativePath "integrations/github-copilot/instructions/code-review-guild.instructions.md" `
+    -TargetRelativePath ".github/copilot-instructions.md"
+
+Get-ChildItem -Path (Join-Path $RepoRoot "integrations/github-copilot/prompts") -Filter "*.prompt.md" -File | ForEach-Object {
+    Copy-ScaffoldFile `
+        -SourceRelativePath ("integrations/github-copilot/prompts/" + $_.Name) `
+        -TargetRelativePath (".github/prompts/" + $_.Name)
+}
+
+Write-Host "Installed Code Review Guild GitHub Copilot scaffolding into $Destination"
+Write-Host "Custom instructions: $Destination/.github/copilot-instructions.md"
+Write-Host "Prompt files: $Destination/.github/prompts"

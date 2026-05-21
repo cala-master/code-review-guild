@@ -6,10 +6,17 @@ Code Review Guild is a skill-first plugin repository for principle-based code re
 
 Supported harnesses:
 
-- Claude: skill packaging plus plugin metadata and session-start bootstrap files
-- Codex: skill packaging plus plugin metadata
-- Cursor: skill packaging plus plugin metadata, command wrappers, agent wrappers, and session-start hook config
-- GitHub Copilot: skill packaging plus reusable prompt files and harness docs
+- Claude: packaged as a Claude Code plugin bundle, but loaded through Claude's plugin mechanisms rather than automatic pickup from a copied folder
+- Codex: packaged as a Codex plugin bundle using the shared skills as source of truth
+- Cursor: packaged as a local Cursor plugin under `~/.cursor/plugins/local/...`
+- GitHub Copilot: project-scaffolded into `.github/` custom instructions and prompt files rather than installed as a plugin
+
+Compatibility status:
+
+- Claude: native plugin format, docs-aligned explicit loading required
+- Codex: native skill/plugin packaging, public install flow is less explicitly documented
+- Cursor: native local plugin install
+- GitHub Copilot: native repository customization files, not plugin bootstrap
 
 Automatic bootstrap is intentionally narrow. It exists to expose Code Review Guild’s review skills at session start where the harness supports it. This repo does not import the broader Superpowers workflow catalog.
 
@@ -65,21 +72,27 @@ tests/                  Repo integrity tests for the skill/plugin architecture
 
 ## Installation
 
-Use the harness-specific installers to copy the package shape you need:
+Use the harness-specific installers for the integration model you need:
 
 ```bash
 ./install/install-claude.sh
 ./install/install-codex.sh
-./install/install-cursor.sh --dest /tmp/code-review-guild-cursor
-./install/install-copilot-vscode.sh
+./install/install-cursor.sh
+./install/install-copilot-vscode.sh --dest /path/to/your-project
 ```
 
 All installers:
 
 - accept `--dest PATH`
-- refuse to overwrite an existing destination unless `--force` is passed
-- copy the shared `skills/` library
-- add only the harness-specific packaging files relevant to that install target
+- refuse to overwrite an existing destination unless `--force` is passed, or for Copilot refuse to overwrite existing target files unless `--force` is passed
+- add only the harness-specific assets relevant to that install target
+
+Harness-specific behavior:
+
+- `Claude`: prepares a plugin bundle. Load it with `claude --plugin-dir <path>` for local use, or install it through Claude's plugin configuration flow.
+- `Codex`: prepares a Codex-oriented plugin bundle containing `.codex-plugin/`, `skills/`, and command wrappers.
+- `Cursor`: installs a local plugin bundle under `~/.cursor/plugins/local/code-review-guild` by default.
+- `GitHub Copilot`: scaffolds `.github/copilot-instructions.md` and `.github/prompts/*.prompt.md` into the target project.
 
 PowerShell equivalents are provided next to each shell script.
 
@@ -103,7 +116,7 @@ The bootstrap message lives in `hooks/session-start.md` and is emitted by `hooks
 ## Example workflow
 
 1. Install the package for the harness you use.
-2. Let the session-start bootstrap expose the review skills where supported.
+2. Load or enable the installed package using the harness-native mechanism for that tool.
 3. Run one focused review such as `review-dry`.
 4. Write the report to `docs/reviews/latest-dry-review.md`.
 5. After the five focused reviews exist, run `review-all-principles` to write `docs/reviews/latest-principles-review.md`.
@@ -111,6 +124,7 @@ The bootstrap message lives in `hooks/session-start.md` and is emitted by `hooks
 ## Limitations
 
 - GitHub Copilot support is prompt-oriented rather than true session-start bootstrap.
+- Codex support uses native packaging conventions, but this repo does not claim a stronger public install guarantee than OpenAI currently documents.
 - The repo ships judgment-based review skills, not AST or static-analysis tooling.
 - The legacy `core/` and `integrations/` files may remain as compatibility/reference material, but `skills/` is the behavioral source of truth.
 

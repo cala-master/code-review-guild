@@ -6,10 +6,17 @@ Claude support is packaged as:
 - shared `skills/`
 - session-start bootstrap assets in `hooks/`
 
-Install with:
+Prepare a local plugin bundle with:
 
 ```bash
 ./install/install-claude.sh
 ```
 
-The installed package includes `skills/`, `.claude-plugin/`, `hooks/session-start.sh`, and this doc. Use the review skills for focused reviews and write reports to the canonical `docs/reviews/latest-*.md` targets.
+This installer prepares a Claude-compatible plugin directory containing `skills/`, `.claude-plugin/`, `hooks/session-start.sh`, and this doc.
+
+Claude Code does not treat a copied folder under `~/.claude/` as installed by itself. Use one of Claude's native loading flows:
+
+- local development: `claude --plugin-dir ~/.claude/code-review-guild`
+- plugin management or marketplace flows documented by Claude Code
+
+Use the review skills for focused reviews and write reports to the canonical `docs/reviews/latest-*.md` targets.

@@ -135,6 +135,7 @@ class RepoIntegrityTests(unittest.TestCase):
         self.assertIn("Codex", readme)
         self.assertIn("Cursor", readme)
         self.assertIn("GitHub Copilot", readme)
+        self.assertIn(".github/copilot-instructions.md", readme)
 
     def test_examples_still_include_contract_reports(self):
         example_root = REPO_ROOT / "examples/python"
@@ -163,7 +164,7 @@ class RepoIntegrityTests(unittest.TestCase):
             ),
             (
                 "install/install-copilot-vscode.sh",
-                ["skills/review-dry/SKILL.md", "docs/README.copilot.md", "integrations/github-copilot/prompts/review-dry.prompt.md"],
+                [".github/copilot-instructions.md", ".github/prompts/review-dry.prompt.md"],
             ),
         ]
 
@@ -172,6 +173,8 @@ class RepoIntegrityTests(unittest.TestCase):
                 script_path = REPO_ROOT / relative_script
                 with tempfile.TemporaryDirectory() as tmp_dir:
                     destination = pathlib.Path(tmp_dir) / "package"
+                    if relative_script == "install/install-copilot-vscode.sh":
+                        destination.mkdir()
                     first = subprocess.run(
                         ["/bin/sh", str(script_path), "--dest", str(destination)],
                         cwd=REPO_ROOT,
@@ -205,7 +208,10 @@ class RepoIntegrityTests(unittest.TestCase):
             self.assertIn("Destination", content, relative_path)
             self.assertIn("Force", content, relative_path)
             self.assertIn("Write-Host", content, relative_path)
-            self.assertIn("skills", content, relative_path)
+            if "copilot" in relative_path:
+                self.assertIn("prompts", content, relative_path)
+            else:
+                self.assertIn("skills", content, relative_path)
 
 
 if __name__ == "__main__":

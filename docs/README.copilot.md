@@ -1,17 +1,20 @@
 # GitHub Copilot Setup
 
-GitHub Copilot support is prompt-oriented rather than true plugin bootstrap.
+GitHub Copilot support is repository-oriented rather than plugin-oriented.
 
-The package includes:
+The installer scaffolds native Copilot customization files into the target project:
 
-- shared `skills/`
-- `integrations/github-copilot/prompts/`
-- `integrations/github-copilot/instructions/`
+- `.github/copilot-instructions.md`
+- `.github/prompts/*.prompt.md`
 
-Install with:
+Install into the repository you want to review:
 
 ```bash
-./install/install-copilot-vscode.sh
+./install/install-copilot-vscode.sh --dest /path/to/your-project
 ```
+
+If you run the installer from the target repository root, `--dest` is optional and defaults to the current working directory.
+
+For VS Code prompt files, enable workspace setting `"chat.promptFiles": true` if your Copilot setup has not enabled prompt files yet.
 
 Use the prompt files directly in your Copilot workflow. The report contract and review behavior still come from the shared skills.
