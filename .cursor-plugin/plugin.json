@@ -1,0 +1,12 @@
+{
+  "name": "code-review-guild",
+  "version": "0.2.0",
+  "description": "Skill-first code review package for practical engineering principles.",
+  "skills": "./skills/",
+  "agents": "./agents/",
+  "commands": "./commands/",
+  "hooks": "./hooks/hooks-cursor.json",
+  "interface": {
+    "displayName": "Code Review Guild"
+  }
+}

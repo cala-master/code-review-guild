@@ -13,22 +13,48 @@ if (-not $Destination) {
     $Destination = $DefaultDestination
 }
 
-$sourceDir = Join-Path $RepoRoot "integrations/$ToolName"
-$targetRoot = Join-Path $Destination $ToolName
+function Get-PackagePaths {
+    param([string]$Name)
 
-if (-not (Test-Path $sourceDir)) {
-    throw "Missing integration bundle: $sourceDir"
+    switch ($Name) {
+        "claude" {
+            @(".claude-plugin", "skills", "hooks", "AGENTS.md", "CLAUDE.md", "README.md", "LICENSE", "docs/README.claude.md")
+        }
+        "codex" {
+            @(".codex-plugin", "skills", "commands", "AGENTS.md", "README.md", "LICENSE", "docs/README.codex.md")
+        }
+        "cursor" {
+            @(".cursor-plugin", "skills", "hooks", "agents", "commands", "AGENTS.md", "README.md", "LICENSE", "docs/README.cursor.md")
+        }
+        "github-copilot" {
+            @("skills", "AGENTS.md", "README.md", "LICENSE", "docs/README.copilot.md", "integrations/github-copilot")
+        }
+        default {
+            throw "Unknown tool: $Name"
+        }
+    }
 }
 
-if ((Test-Path $targetRoot) -and -not $Force) {
-    throw "Destination already exists: $targetRoot. Re-run with -Force to overwrite."
+if ((Test-Path $Destination) -and -not $Force) {
+    throw "Destination already exists: $Destination. Re-run with -Force to overwrite."
 }
 
+if (Test-Path $Destination) {
+    Remove-Item -Recurse -Force $Destination
+}
 New-Item -ItemType Directory -Force -Path $Destination | Out-Null
-if (Test-Path $targetRoot) {
-    Remove-Item -Recurse -Force $targetRoot
-}
-Copy-Item -Recurse -Force $sourceDir $targetRoot
 
-Write-Host "Installed $ToolName bundle to $targetRoot"
-Write-Host "Next: use the review-dry, review-kiss, review-yagni, review-soc, review-solid, and review-all-principles entrypoints from that bundle."
+foreach ($relativePath in (Get-PackagePaths -Name $ToolName)) {
+    $sourcePath = Join-Path $RepoRoot $relativePath
+    $targetPath = Join-Path $Destination $relativePath
+    $targetParent = Split-Path -Parent $targetPath
+
+    if ($targetParent) {
+        New-Item -ItemType Directory -Force -Path $targetParent | Out-Null
+    }
+
+    Copy-Item -Recurse -Force $sourcePath $targetPath
+}
+
+Write-Host "Installed Code Review Guild package for $ToolName to $Destination"
+Write-Host "Shared skills are available under $Destination/skills"

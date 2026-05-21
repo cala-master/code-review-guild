@@ -1,33 +1,32 @@
 # Code Review Guild
 
-Code Review Guild is a file-based collection of focused AI reviewers for practical engineering principles. Instead of one giant "review my code" prompt, it ships narrow reviewer bundles for `DRY`, `KISS`, `YAGNI`, `SoC`, `SOLID`, plus an `all-principles` orchestrator that consolidates the results.
+Code Review Guild is a skill-first plugin repository for principle-based code review. The core product is a shared `skills/` library for `DRY`, `KISS`, `YAGNI`, `SoC`, `SOLID`, plus a consolidated `all-principles` review. Harness-specific packaging for Claude, Codex, Cursor, and GitHub Copilot is layered on top of those skills.
 
-## What v1 includes
+## Support model
 
-- Shared reviewer contracts in [`core/`](/Users/ilastarikov/Projects/personal/code-review-guild/core)
-- Tool bundles for Claude, Codex, Cursor, and GitHub Copilot in [`integrations/`](/Users/ilastarikov/Projects/personal/code-review-guild/integrations)
-- Copy-based installer scripts in [`install/`](/Users/ilastarikov/Projects/personal/code-review-guild/install)
-- A Python example with sample reports in [`examples/python/`](/Users/ilastarikov/Projects/personal/code-review-guild/examples/python)
+Supported harnesses:
 
-## Reviewers
+- Claude: skill packaging plus plugin metadata and session-start bootstrap files
+- Codex: skill packaging plus plugin metadata
+- Cursor: skill packaging plus plugin metadata, command wrappers, agent wrappers, and session-start hook config
+- GitHub Copilot: skill packaging plus reusable prompt files and harness docs
 
-- `review-dry`
-- `review-kiss`
-- `review-yagni`
-- `review-soc`
-- `review-solid`
-- `review-all-principles`
+Automatic bootstrap is intentionally narrow. It exists to expose Code Review Guild’s review skills at session start where the harness supports it. This repo does not import the broader Superpowers workflow catalog.
 
-Each reviewer is intentionally narrow:
+## Public skill catalog
 
-- It analyzes one principle only.
-- It avoids generic code review noise.
-- It separates `Must fix`, `Should consider`, and `Acceptable tradeoff`.
-- It writes reusable Markdown reports into `docs/reviews/` in the reviewed project.
+- `review-dry`: harmful duplication only
+- `review-kiss`: unnecessary complexity only
+- `review-yagni`: speculative design only
+- `review-soc`: separation of concerns only
+- `review-solid`: practical SOLID issues only
+- `review-all-principles`: consolidate the five principle reviews into one final report
+
+The bootstrap skill `using-code-review-guild` is internal support plumbing. It exposes the review skills and the report contract, but it is not part of the public review surface.
 
 ## Report contract
 
-V1 standardizes these output files in the target project:
+Every review writes into the target project’s `docs/reviews/` directory using these canonical filenames:
 
 - `docs/reviews/latest-dry-review.md`
 - `docs/reviews/latest-kiss-review.md`
@@ -36,84 +35,93 @@ V1 standardizes these output files in the target project:
 - `docs/reviews/latest-solid-review.md`
 - `docs/reviews/latest-principles-review.md`
 
-Each report must include:
+Every report must include:
 
-- `Scope`
-- `Summary`
-- `Must fix`
-- `Should consider`
-- `Acceptable tradeoff`
-- `Not a problem`
-- `Reusable project observations`
+- `## Scope`
+- `## Summary`
+- `## Must fix`
+- `## Should consider`
+- `## Acceptable tradeoff`
+- `## Not a problem`
+- `## Reusable project observations`
 
-The full contract lives in [core/review-contract.md](/Users/ilastarikov/Projects/personal/code-review-guild/core/review-contract.md).
+The example reports in `examples/python/reports/` remain the reference shape.
 
-## Repository layout
+## Repository structure
 
 ```text
-core/                  Shared reviewer guidance and report contracts
-integrations/          Tool-specific reviewer bundles
-install/               Shell and PowerShell installers
-examples/python/       Imperfect sample project and sample reports
-tests/                 Repository integrity checks
+skills/                 Source of truth for reviewer behavior
+hooks/                  Session-start bootstrap assets
+agents/                 Thin harness wrappers around the skills
+commands/               Thin command wrappers around the skills
+.claude-plugin/         Claude-facing packaging metadata
+.codex-plugin/          Codex-facing packaging metadata
+.cursor-plugin/         Cursor-facing packaging metadata
+integrations/           Remaining harness-specific assets, including Copilot prompts
+docs/                   Harness-specific install and usage docs
+examples/python/        Imperfect demo project and canonical report examples
+tests/                  Repo integrity tests for the skill/plugin architecture
 ```
 
 ## Installation
 
-Each installer copies one integration bundle into a destination directory and refuses to overwrite an existing install unless `--force` is passed.
-
-Examples:
+Use the harness-specific installers to copy the package shape you need:
 
 ```bash
 ./install/install-claude.sh
-./install/install-codex.sh --dest "$HOME/.codex/custom-reviewers"
-./install/install-cursor.sh --dest /tmp/cursor-bundle --force
+./install/install-codex.sh
+./install/install-cursor.sh --dest /tmp/code-review-guild-cursor
 ./install/install-copilot-vscode.sh
 ```
 
-PowerShell equivalents are available next to each shell script.
+All installers:
 
-Default destinations:
+- accept `--dest PATH`
+- refuse to overwrite an existing destination unless `--force` is passed
+- copy the shared `skills/` library
+- add only the harness-specific packaging files relevant to that install target
 
-- Claude: `~/.claude/code-review-guild`
-- Codex: `~/.codex/code-review-guild`
-- Cursor: `~/.cursor/code-review-guild`
-- GitHub Copilot: `~/.github/copilot/code-review-guild`
+PowerShell equivalents are provided next to each shell script.
 
-The installers copy the tool-specific bundle into a folder named after the integration, for example `~/.codex/code-review-guild/codex/`.
+## Session-start bootstrap
 
-## How to use the bundles
+Where supported, the session-start bootstrap loads the narrow Code Review Guild context:
 
-Claude:
-- Copy or reference the files from `agents/` and `commands/` in your Claude setup.
+- `using-code-review-guild`
+- canonical report destinations
+- the six review entrypoints
 
-Codex:
-- Copy the `.toml` agent files and the `AGENTS.md` guidance into your Codex project or user config.
+The bootstrap message lives in `hooks/session-start.md` and is emitted by `hooks/session-start.sh`. Cursor also includes explicit hook wiring through `hooks/hooks-cursor.json`.
 
-Cursor:
-- Use the `rules/` and `commands/` files as opt-in review helpers. They are intentionally not always-on.
+## Harness docs
 
-GitHub Copilot:
-- Use the prompt files directly inside VS Code or copy them into your preferred prompt-file workflow.
+- [Claude setup](docs/README.claude.md)
+- [Codex setup](docs/README.codex.md)
+- [Cursor setup](docs/README.cursor.md)
+- [GitHub Copilot setup](docs/README.copilot.md)
 
-## Example
+## Example workflow
 
-The Python example shows the intended quality bar:
+1. Install the package for the harness you use.
+2. Let the session-start bootstrap expose the review skills where supported.
+3. Run one focused review such as `review-dry`.
+4. Write the report to `docs/reviews/latest-dry-review.md`.
+5. After the five focused reviews exist, run `review-all-principles` to write `docs/reviews/latest-principles-review.md`.
 
-- deliberately imperfect source files in [`examples/python/src/`](/Users/ilastarikov/Projects/personal/code-review-guild/examples/python/src)
-- one report per principle in [`examples/python/reports/`](/Users/ilastarikov/Projects/personal/code-review-guild/examples/python/reports)
+## Limitations
 
-## Verification
+- GitHub Copilot support is prompt-oriented rather than true session-start bootstrap.
+- The repo ships judgment-based review skills, not AST or static-analysis tooling.
+- The legacy `core/` and `integrations/` files may remain as compatibility/reference material, but `skills/` is the behavioral source of truth.
 
-Run the repository integrity suite with:
+## Contributing
 
-```bash
-python3 -m unittest tests/test_repo_integrity.py -v
-```
+Edit the `skills/` content first.
 
-This validates:
+When changing behavior:
 
-- all expected core and integration files exist
-- report contracts mention the canonical filenames and sections
-- shell installers copy bundles and enforce overwrite protection
-- PowerShell installers expose the same destination and force contract
+- update the relevant `skills/*/SKILL.md`
+- keep wrappers in `agents/`, `commands/`, and plugin manifests thin
+- preserve the canonical report filenames and section schema
+- update harness docs if the installation or invocation story changes
+- run `python3 -m unittest tests/test_repo_integrity.py -v`

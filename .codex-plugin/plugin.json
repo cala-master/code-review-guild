@@ -1,0 +1,9 @@
+{
+  "name": "code-review-guild",
+  "version": "0.2.0",
+  "description": "Skill-first code review package for DRY, KISS, YAGNI, SoC, SOLID, and a consolidated principles review.",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Code Review Guild"
+  }
+}
